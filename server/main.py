@@ -1,16 +1,17 @@
 import datetime
-from fastapi import FastAPI, HTTPException, Depends
+from fastapi import FastAPI, HTTPException, Depends, File, UploadFile
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 from typing import Optional, Dict
 import os, sys
 from ZODB import FileStorage, DB
 
 app = FastAPI()
-
+app.mount("/static", StaticFiles(directory="static"), name="static")
 
 from database import *
 
-code_generator = CourseCodeGenerator()
+code_generator = CodeGenerator()
 db_helper = ZODBHelper('mydatabase.fs')
  
  # Base model for student registration, login, and course creation
@@ -38,7 +39,7 @@ class Module(BaseModel):
     moduleType: str
     moduleStatus: str
 
-class Lesson(BaseModel):
+class LessonInput(BaseModel):
     lessonName: str
     lessonDescription: str
     lessonContent: str
@@ -175,8 +176,20 @@ async def delete_module(moduleName: str):
 
 '''----------------------------------    Lesson      ---------------------------------- '''
 @app.post("/lesson")
-async def create_lesson(lesson: Lesson):
-    db_helper.lesson_operations.create_lesson(lesson)
+async def create_lesson(lesson_input: LessonInput, file: UploadFile = File(None)):
+    filename = None
+    if file.size > 0:
+        filename = file.filename + code_generator.generate_course_code(prefix='F', length=8)
+        unique_filename = "./static/" + filename
+        with open(unique_filename, "wb") as buffer:
+            buffer.write(await file.read())
+
+    lesson_obj = Lesson(lesson_input.lessonName, unique_filename)
+
+
+    db_helper.lesson_operations.create_lesson(lesson_obj)
+
+    transaction.commit()
 
     return {"message": "Lesson created successfully"}
 

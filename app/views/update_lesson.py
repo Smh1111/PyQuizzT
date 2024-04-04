@@ -105,6 +105,4 @@ class EditLessonForm(QWidget):
         elif not lesson_file_path:
             self.error_message.setText("Please attach a lesson file")
         else:
-            print("Lesson Name:", lesson_name)
-            print("Lesson File Path:", lesson_file_path)
             self.error_message.clear()

@@ -70,7 +70,7 @@ TestCaseResult
     - result
 
 '''
-class CourseCodeGenerator:
+class CodeGenerator:
     def __init__(self):
         self.used_course_codes = set()
 
